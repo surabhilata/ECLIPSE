@@ -27,11 +27,9 @@ For the analysis of the data the modules required are:
 
 # How to use ECLIPSE
 
-# Initiate the notebook environment by command ("mamba activate venv")
+1. Initiate the notebook environment by command ("mamba activate venv")
 
-# To perform large scale sequence similarity search
-
-# We have used MMseq2 easy-search where we have used P.aeruginosa panproteome dataset in tar file which was searched over Atlas AFDBv4_90.fasta file. #For each protein input file we have taken the best match with following command in terminal
+2. To perform large scale sequence similarity search we have used MMseq2 easy-search where we have used P.aeruginosa panproteome dataset in tar file which was searched over Atlas AFDBv4_90.fasta file. #For each protein input file we have taken the best match with following command in terminal
      ("mmseqs easy-search PA.tar.gz AFDBv4_90.fasta atlas_search_results.m8 tmp --max-seqs")
 
 2. 
