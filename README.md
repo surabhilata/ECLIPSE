@@ -1,75 +1,72 @@
-# ECLIPSE —> Dark Proteome Exploration of ESKAPE Pathogens
+# ECLIPSE — Dark Proteome Exploration of ESKAPE Pathogens
 
-**ECLIPSE** (ESKAPE Connectome Linkage and Inference for Proteome Sequence Exploration) is a modular, pathogen-agnostic computational pipeline for the systematic identification and prioritisation of functionally uncharacterised ("dark") protein families in bacterial panproteomes.
+**ECLIPSE** (ESKAPE Connectome Linkage and Inference for Proteome Sequence Exploration) is a modular computational pipeline for the systematic identification and prioritisation of functionally uncharacterised ("dark") protein families in bacterial panproteomes.
 
-ECLIPSE embeds target-pathogen proteomes within the global sequence similarity network of the (https://uniprot3d.org/) (AFDB90v4, UniRef v.2022_03) and identifies connected components composed entirely of unannotated proteins. A taxonomic diversity framework and the Dark Proteome Prioritisation Score (DPPS) rank dark candidates by biological relevance for experimental follow-up.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Pipeline Structure](#pipeline-structure)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Input Files](#input-files)
-- [Usage](#usage)
-- [Output Files](#output-files)
-- [Applying ECLIPSE to Other Pathogens](#applying-eclipse-to-other-pathogens)
-- [Citation](#citation)
-- [Contact](#contact)
+ECLIPSE maps target-pathogen proteomes onto the global sequence similarity network of the (https://uniprot3d.org/) (AFDB90v4, UniRef v.2022_03), identifies protein families that are completely dark at the connected component level, characterises their taxonomic diversity across ESKAPE pathogens, and ranks them using the Dark Proteome Prioritisation Score (DPPS).
 
 ---
 
-## Overview
+## Pipeline overview
 
-ECLIPSE is implemented as three sequential Jupyter notebooks:
-
-| Notebook | Description |
-|----------|-------------|
-| `ECLIPSE_PartI.ipynb` | Atlas mapping, brightness classification, taxonomic diversity analysis |
-| `ECLIPSE_PartII.ipynb` | Two-track stratification into Pseudomonas-specific and ESKAPE-enriched dark components |
-| `ECLIPSE_DPPS_Scoring.ipynb` | DPPS scoring, weight sensitivity analysis, and visualisations |
-
-Applied to the *P. aeruginosa* panproteome (3,460,657 proteins from 635 strains), ECLIPSE identified 120,985 proteins (4%) residing in completely dark connected components and prioritised four Tier I candidates using the DPPS framework.
-
----
-
-## Pipeline Structure
+ECLIPSE runs as three sequential Jupyter notebooks. Each notebook must be completed before starting the next.
 
 ```
-ESKAPE pathogen FASTA files
+Your pathogen FASTA files
         │
-        ▼
-┌─────────────────────────────────────┐
-│  ECLIPSE Part I                     │
-│  • MMseqs2 easy-search vs AFDB90v4  │
-│  • Community + component mapping    │
-│  • Brightness classification        │
-│  • Taxonomic diversity analysis     │
-│  Output: eclipse.csv                │
-└──────────────────┬──────────────────┘
+        ▼  MMseqs2 easy-search (run before Part I)
+        │
+┌───────────────────────────────────────────┐
+│  ECLIPSE_PartI.ipynb                      │
+│                                           │
+│  • Load MMseqs2 search results (PA.m8)    │
+│  • Map proteins → Atlas communities       │
+│  • Map communities → connected components │
+│  • Classify dark communities (0%)         │
+│  • Classify dark components (0%)          │
+│  • Compute ESKAPE taxonomic diversity:    │
+│    - ESKAPE_proportion                    │
+│    - ESKAPE_genus_evenness                │
+│    - ESKAPE_relative_evenness             │
+│                                           │
+│  Output → eclipse.csv                     │
+└──────────────────┬────────────────────────┘
                    │
                    ▼
-┌─────────────────────────────────────┐
-│  ECLIPSE Part II                    │
-│  • Track A: Pseudomonas-specific    │
-│    (ESKAPE_proportion == 1.0)       │
-│  • Track B: ESKAPE-enriched         │
-│    (ESKAPE_proportion >= 0.5)       │
-│  Output: two track CSV files        │
-└──────────────────┬──────────────────┘
+┌───────────────────────────────────────────┐
+│  ECLIPSE_PartII.ipynb                     │
+│                                           │
+│  • Load eclipse.csv + Atlas taxonomy      │
+│  • Add P. aeruginosa proportion per       │
+│    component from Atlas taxonomy files    │
+│  • Track A — Pseudomonas-specific:        │
+│    ESKAPE_proportion == 1.0               │
+│    all Atlas genus == Pseudomonas         │
+│    → 83 components                        │
+│  • Track B — ESKAPE-enriched:             │
+│    ESKAPE_proportion >= 0.5               │
+│    excluding Track A                      │
+│    → 215 components                       │
+│                                           │
+│  Output → two track CSV files             │
+└──────────────────┬────────────────────────┘
                    │
                    ▼
-┌─────────────────────────────────────┐
-│  ECLIPSE DPPS Scoring               │
-│  • Median length filter (≥300 aa)   │
-│  • MMseqs2 clustering (30%/80%)     │
-│  • DPPS composite scoring (S1–S5)   │
-│  • Monte Carlo sensitivity (n=500)  │
-│  • Tier I–IV assignment             │
-│  Output: scored CSV + figures       │
-└─────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│  ECLIPSE_DPPS_score.ipynb                 │
+│                                           │
+│  • Median length filter (>= 300 aa)       │
+│  • MMseqs2 easy-cluster (30% id, 80% cov) │
+│  • One representative per cluster         │
+│  • DPPS scoring:                          │
+│    S1 darkness · S2 PA proportion         │
+│    S3 specificity · S4 PA strain coverage │
+│    S5 ESKAPE enrichment (Track B only)    │
+│  • Tier I–IV assignment                   │
+│  • Monte Carlo weight sensitivity (n=500) │
+│  • Figures and summary report             │
+│                                           │
+│  Output → scored CSVs + figures           │
+└───────────────────────────────────────────┘
 ```
 
 ---
@@ -78,235 +75,173 @@ ESKAPE pathogen FASTA files
 
 ### Python packages
 
+All standard packages — install via pip if not already available:
+
 ```
-python >= 3.8
-pandas >= 1.3
-numpy >= 1.21
-matplotlib >= 3.4
-seaborn >= 0.11
-tqdm
-pyyaml
-biopython
-jupyter
+pandas    numpy    matplotlib    seaborn    tqdm    pyyaml    biopython
 ```
 
-### External tools
+### External tool
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| [MMseqs2](https://github.com/soedinglab/MMseqs2) | 17-b804f | Sequence search and clustering |
+| Tool | Version | Used for |
+|------|---------|----------|
+| [MMseqs2](https://github.com/soedinglab/MMseqs2) | 17-b804f | Sequence search (before Part I) and clustering (Part III) |
 
-### Atlas data files (required, not included)
-
-The following large Atlas data files must be downloaded separately from the (https://doi.org/10.5281/zenodo.19119408) before running Part I and Part II:
-
-| File | Size | Used in |
-|------|------|---------|
-| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | ~4 GB | Part I, Part II |
-| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | ~4 GB | Part I, Part II |
-| `AFDB90v4_subgraphs_summary.csv` | ~500 MB | Part I |
-
-> **Note:** These files are produced by Durairaj et al. (2023) and are available from the Protein Universe Atlas resource. See the Atlas paper for details (https://www.nature.com/articles/s41586-023-06622-3)
----
-
-## Installation
-
-```bash
-No installation is required beyond having Jupyter and the standard Python scientific stack. Simply download or clone the repository, open each notebook in Jupyter, and run the cells from top to bottom in order.
-
-```bash
-git clone https://github.com/surabhilata/ECLIPSE.git
-cd ECLIPSE
-jupyter notebook
-```
-
-The only external tool that must be installed separately is **MMseqs2** (version 17-b804f), which is used before running Part I to search your proteome against the Atlas:
-
+Install MMseqs2:
 ```bash
 conda install -c conda-forge -c bioconda mmseqs2=17-b804f
 ```
 
----
+### Atlas data files
 
-## Input Files
+The following large files from the Protein Universe Atlas must be downloaded separately and placed in the same directory as the notebooks. They are not included in this repository due to their size (~8 GB total).
 
-### Part I inputs
+| File | Used in |
+|------|---------|
+| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Part I, Part II |
+| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | Part I, Part II |
+| `AFDB90v4_subgraphs_summary.csv` | Part I |
 
-| File | Description |
-|------|-------------|
-| `PA.m8` | MMseqs2 easy-search output — your pathogen proteome searched against AFDB90v4. Tab-separated, standard BLAST-6 format with columns: queryID, targetID, fident, alnlen, mismatch, gapopen, qstart, qend, tstart, tend, evalue, bitscore |
-| Atlas data files | See [Requirements](#requirements) above |
-
-**To generate `PA.m8`**, run MMseqs2 easy-search against the Atlas AFDB90 target database:
-
-```bash
-After installation run in terminal: mmseqs easy-search PA_faa.tar.gz AFDBv4_90.fasta PA.m8 tmp --max-seqs 1
-```
-
-### Part II inputs
-
-| File | Description |
-|------|-------------|
-| `eclipse.csv` | Output from Part I — proteins with mapped component IDs and brightness values |
-| Atlas data files | Same as Part I — needed for P. aeruginosa proportion calculation |
-
-### DPPS Scoring inputs
-
-| File | Description |
-|------|-------------|
-| `eclipse.csv` | Part I output |
-| `mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv` | Part II Track A output |
-| `mapped_p_aer_dataset_eskape_enriched_dark_components.csv` | Part II Track B output |
+Download from the (https://doi.org/10.5281/zenodo.19119408)
+Note: These files are produced by Durairaj et al. (2023) and are available from the paper (https://www.nature.com/articles/s41586-023-06622-3)
 
 ---
 
-## Usage
+## How to run
 
-Run the three notebooks in order. Each notebook must be run to completion before starting the next.
+Open each notebook in Jupyter and run all cells from top to bottom in order.
 
-### Step 1 — Run Part I
+### Before Part I — run MMseqs2 search
+
+Search your pathogen proteome against the Atlas AFDB90v4 database:
 
 ```bash
-jupyter notebook ECLIPSE_PartI.ipynb
+mmseqs easy-search PA_faa.tar.gz AFDBv4_90.fasta PA.m8 tmp
 ```
 
-Before running, update the file paths at the top of the notebook:
+This produces `PA.m8` — the MMseqs2 alignment results file that Part I reads as input. For each query protein only the best match is retained. Output format is standard BLAST-6:
+
+```
+queryID  targetID  fident  alnlen  mismatch  gapopen  qstart  qend  tstart  tend  evalue  bitscore
+```
+
+### Part I
+
+Update the file path at the top of the notebook:
 
 ```python
-# Update these paths for your system
-atlas_search_results_info = ['./PA.m8']           # your MMseqs2 output
-
-atlas_datafiles = [
-    'AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv',
-    'AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv'
-]
+atlas_search_results_info = ['./PA.m8']   # path to your MMseqs2 output
 ```
 
-**Runtime:** approximately 30-60 minutes depending on dataset size and available RAM. At least 32 GB RAM is recommended for loading the full Atlas data files.
+**Memory note:** at least 32 GB RAM recommended — the Atlas taxonomy files are ~4 GB each.
 
-### Step 2 — Run Part II
-
-```bash
-jupyter notebook ECLIPSE_PartII.ipynb
-```
+### Part II
 
 Update the file paths at the top of the notebook:
 
 ```python
-# NOTE: you need to modify the paths here for your system
+# NOTE: update these paths for your system
 atlas_datafiles = [
     'AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv',
     'AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv'
 ]
-
 mapped_p_aer_dataset = pd.read_csv('eclipse_search_results_component_dark.csv')
 ```
 
-**Runtime:** approximately 30-60 minutes.
-
-### Step 3 — Run DPPS Scoring
-
-```bash
-jupyter notebook ECLIPSE_DPPS_Scoring.ipynb
-```
+### Part III — DPPS Scoring
 
 Update the configuration block at the top of the notebook:
 
 ```python
-ECLIPSE_CSV        = './eclipse.csv'           # Part I output
-COMPONENTS_CSV     = './AFDB90v4_subgraphs_summary.csv'
-N_STRAINS          = 635                        # total strains in your dataset
+PS_CSV       = './mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv'
+ES_CSV       = './mapped_p_aer_dataset_eskape_enriched_dark_components.csv'
+N_PA_STRAINS = 635    # update to match your total strain count
+MIN_SEQ_LEN  = 300    # minimum median component sequence length in aa
 ```
 
-**Runtime:** approximately 30–60 minutes including Monte Carlo sensitivity analysis.
+No Atlas files are needed for this notebook — all mapping was done in Parts I and II.
 
 ---
 
-## Output Files
+## Input and output files
 
-### Part I outputs
+### Part I
 
-| File | Description |
-|------|-------------|
-| `eclipse.csv` | All query proteins with mapped community IDs, component IDs, brightness values, and taxonomic diversity metrics (ESKAPE_proportion, ESKAPE_genus_evenness, ESKAPE_relative_evenness) |
+| File | Direction | Description |
+|------|-----------|-------------|
+| `PA.m8` | Input | MMseqs2 search results |
+| Atlas CSV files | Input | Community and component brightness and taxonomy |
+| `AFDB90v4_subgraphs_summary.csv` | Input | Component-level summary statistics |
+| `eclipse.csv` | **Output** | All query proteins with community IDs, component IDs, brightness values, and ESKAPE diversity metrics |
 
-### Part II outputs
+### Part II
 
-| File | Description |
-|------|-------------|
-| `mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv` | Track A — Pseudomonas-specific dark components (ESKAPE_proportion == 1.0, all genus == Pseudomonas) |
-| `mapped_p_aer_dataset_eskape_enriched_dark_components.csv` | Track B — ESKAPE-enriched dark components (ESKAPE_proportion >= 0.5, excluding Track A) |
+| File | Direction | Description |
+|------|-----------|-------------|
+| `eclipse.csv` | Input | Part I output |
+| Atlas CSV files | Input | For P. aeruginosa proportion calculation |
+| `mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv` | **Output** | Track A — Pseudomonas-specific dark components |
+| `mapped_p_aer_dataset_eskape_enriched_dark_components.csv` | **Output** | Track B — ESKAPE-enriched dark components |
 
-### DPPS Scoring outputs
+### Part III — DPPS Scoring
 
-| File | Description |
-|------|-------------|
-| `dpps_scored_pseudomonas_specific.csv` | Track A components with DPPS sub-scores, composite score, and tier assignment |
-| `dpps_scored_eskape_enriched.csv` | Track B components with DPPS sub-scores (S1–S5), composite score, and tier assignment |
-| `dpps_representatives_pseudomonas_specific.csv` | Track A non-redundant representative sequences with scores |
-| `dpps_representatives_eskape_enriched.csv` | Track B non-redundant representative sequences with scores |
-| `dpps_distribution.pdf / .png` | DPPS histogram by tier for both tracks |
-| `dpps_scatter_s2_s3.pdf / .png` | Scatter plot of S2 vs S3 coloured by DPPS |
-| `dpps_heatmap_tier1.pdf / .png` | Sub-score heatmap for Tier I candidates |
-| `dpps_sensitivity.pdf / .png` | Monte Carlo weight sensitivity scatter plot |
+| File | Direction | Description |
+|------|-----------|-------------|
+| Track A and Track B CSVs | Input | Part II outputs |
+| `dpps_components_pseudomonas_specific.csv` | **Output** | Track A components with DPPS sub-scores and tier |
+| `dpps_components_eskape_enriched.csv` | **Output** | Track B components with DPPS sub-scores and tier |
+| `dpps_representatives_pseudomonas_specific.csv` | **Output** | Track A representative sequences with scores |
+| `dpps_representatives_eskape_enriched.csv` | **Output** | Track B representative sequences with scores |
+| `dpps_tier1_pseudomonas_specific.csv` | **Output** | Tier I candidates Track A |
+| `dpps_tier1_eskape_enriched.csv` | **Output** | Tier I candidates Track B |
+| Figures (PDF + PNG) | **Output** | DPPS distributions, scatter plots, heatmaps, sensitivity analysis |
 
-### DPPS tier definitions
+---
 
-| Tier | DPPS range | Priority |
-|------|-----------|----------|
-| Tier I | ≥ 0.75 | Highest priority — experimental follow-up |
+## DPPS scoring system
+
+Each dark component receives a composite score calculated as a weighted sum of sub-scores.
+
+| Sub-score | Definition | Track A weight | Track B weight |
+|-----------|-----------|----------------|----------------|
+| S1 darkness | 1 − (brightness / 100) | 0.15 | 0.15 |
+| S2 PA proportion | Fraction of Atlas members annotated as *P. aeruginosa* | 0.40 | 0.25 |
+| S3 specificity | 1 − ESKAPE_relative_evenness | 0.25 | 0.20 |
+| S4 PA strain coverage | Unique PA strains / total strains | 0.20 | 0.15 |
+| S5 ESKAPE enrichment | ESKAPE_proportion × (1 − ESKAPE_genus_evenness) | — | 0.25 |
+
+### Priority tiers
+
+| Tier | DPPS | Description |
+|------|------|-------------|
+| Tier I | ≥ 0.75 | Highest priority — experimental follow-up recommended |
 | Tier II | 0.50–0.75 | High priority |
 | Tier III | 0.25–0.50 | Moderate priority |
 | Tier IV | < 0.25 | Background |
 
----
-
-## Applying ECLIPSE to Other Pathogens
-
-ECLIPSE is designed to be pathogen-agnostic. To apply it to a different ESKAPE pathogen:
-
-1. Download protein FASTA files for your target pathogen from [PATRIC](https://www.patricbrc.org) retaining only strains with complete genome annotation.
-
-2. Run MMseqs2 easy-search against AFDB90v4 to generate your `.m8` search results file.
-
-3. Update the file paths in each notebook to point to your new `.m8` file and output directory.
-
-4. Update the strain count parameter in DPPS Scoring:
-   ```python
-   N_STRAINS = [your total strain count]  # e.g. 1200 for K. pneumoniae
-   ```
-
-5. Run Parts I, II, and DPPS Scoring in order.
-
-No other changes to the code are required. The DPPS weights and tier thresholds were designed to be transferable across ESKAPE organisms without pathogen-specific calibration.
+Tier I stability scores are computed by Monte Carlo weight sensitivity analysis (500 Dirichlet-sampled weight vectors). Components with stability ≥ 0.80 are considered robustly prioritised independent of weight choice.
 
 ---
 
-## Repository Structure
+## Applying ECLIPSE to another ESKAPE pathogen
 
-```
-ECLIPSE/
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── ECLIPSE_PartI.ipynb          # Atlas mapping and darkness classification
-├── ECLIPSE_PartII.ipynb         # Two-track stratification
-├── ECLIPSE_DPPS_Scoring.ipynb   # DPPS scoring and visualisations
-└── example_data/
-    └── example_input.m8         # Small example MMseqs2 output for testing
-```
+1. Download protein FASTA files for your target pathogen from [PATRIC](https://www.patricbrc.org) — retain only strains with complete genome annotation.
+2. Run MMseqs2 easy-search to generate your `.m8` file.
+3. Update all file paths in each notebook.
+4. Update `N_PA_STRAINS` in the DPPS notebook to match your strain count.
+5. Run Parts I, II, and III in order.
+
+No other changes to the code are required.
 
 ---
 
 ## Citation
 
+If you use ECLIPSE please cite:
 
-
-Please also cite the Protein Universe Atlas:
+Please also cite:
 
 > Durairaj J. et al. (2023). *Exploring the functional universe of protein families.* Nature, 626, 582–589. https://doi.org/10.1038/s41586-023-06716-0
-
-And MMseqs2:
 
 > Steinegger M. & Söding J. (2017). *MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets.* Nature Biotechnology, 35, 1026–1028. https://doi.org/10.1038/nbt.3988
 
@@ -314,13 +249,16 @@ And MMseqs2:
 
 ## Contact
 
-**Surabhi Lata** — Department of Molecular Structural Biology, Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-email: surabhi.lata@helmholtz-hzi.de /
-       surabhilata94@gmail.com
-For questions about the pipeline, please open a GitHub Issue or contact the authors directly.
+**Surabhi Lata**  
+Department of Molecular Structural Biology
+Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
+surabhi.lata@helmholtz-hzi.de
+surabhilata94@gmail.com
+
+For questions please open a GitHub Issue.
 
 ---
 
 ## Licence
 
-This project is licensed under the MIT Licence. See [LICENSE](LICENSE) for details.
+MIT Licence — see [LICENSE](LICENSE) for details.
