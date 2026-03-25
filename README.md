@@ -98,7 +98,7 @@ jupyter
 
 ### Atlas data files (required, not included)
 
-The following large Atlas data files must be downloaded separately from the [Protein Universe Atlas](https://www.proteinatlas.org/universe) before running Part I and Part II:
+The following large Atlas data files must be downloaded separately from the (https://doi.org/10.5281/zenodo.19119408) before running Part I and Part II:
 
 | File | Size | Used in |
 |------|------|---------|
