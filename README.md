@@ -106,8 +106,7 @@ The following large Atlas data files must be downloaded separately from the (htt
 | `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | ~4 GB | Part I, Part II |
 | `AFDB90v4_subgraphs_summary.csv` | ~500 MB | Part I |
 
-> **Note:** These files are produced by Durairaj et al. (2023) and are available from the Protein Universe Atlas resource. See the Atlas paper for download instructions: https://doi.org/10.1038/s41586-023-06716-0
-
+> **Note:** These files are produced by Durairaj et al. (2023) and are available from the Protein Universe Atlas resource. See the Atlas paper for details (https://www.nature.com/articles/s41586-023-06622-3)
 ---
 
 ## Installation
