@@ -2,7 +2,7 @@
 
 **ECLIPSE** (ESKAPE Connectome Linkage and Inference for Proteome Sequence Exploration) is a modular, pathogen-agnostic computational pipeline for the systematic identification and prioritisation of functionally uncharacterised ("dark") protein families in bacterial panproteomes.
 
-ECLIPSE embeds target-pathogen proteomes within the global sequence similarity network of the [Protein Universe Atlas](https://www.proteinatlas.org/universe) (AFDB90v4, UniRef v.2022_03) and identifies connected components composed entirely of unannotated proteins. A taxonomic diversity framework and the Dark Proteome Prioritisation Score (DPPS) rank dark candidates by biological relevance for experimental follow-up.
+ECLIPSE embeds target-pathogen proteomes within the global sequence similarity network of the (https://uniprot3d.org/) (AFDB90v4, UniRef v.2022_03) and identifies connected components composed entirely of unannotated proteins. A taxonomic diversity framework and the Dark Proteome Prioritisation Score (DPPS) rank dark candidates by biological relevance for experimental follow-up.
 
 > **Associated publication:**
 > Lata S. & Heinz D.W. (2025). *ECLIPSE: Exploring the dark proteome of ESKAPE pathogens through the sequence similarity network of the Protein Universe Atlas.* Bioinformatics Oxford. [DOI to be added upon acceptance]
