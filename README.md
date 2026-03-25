@@ -315,7 +315,8 @@ And MMseqs2:
 ## Contact
 
 **Surabhi Lata** — Department of Molecular Structural Biology, Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-
+email: surabhi.lata@helmholtz-hzi.de
+       surabhilata94@gmail.com
 For questions about the pipeline, please open a GitHub Issue or contact the authors directly.
 
 ---
