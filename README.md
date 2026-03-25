@@ -112,18 +112,17 @@ The following large Atlas data files must be downloaded separately from the (htt
 ## Installation
 
 ```bash
-# Clone the repository
+No installation is required beyond having Jupyter and the standard Python scientific stack. Simply download or clone the repository, open each notebook in Jupyter, and run the cells from top to bottom in order.
+
+```bash
 git clone https://github.com/surabhilata/ECLIPSE.git
 cd ECLIPSE
+jupyter notebook
+```
 
-# Create a conda environment (recommended)
-conda create -n eclipse python=3.9
-conda activate eclipse
+The only external tool that must be installed separately is **MMseqs2** (version 17-b804f), which is used before running Part I to search your proteome against the Atlas:
 
-# Install Python dependencies
-pip install pandas numpy matplotlib seaborn tqdm pyyaml biopython jupyter
-
-# Install MMseqs2
+```bash
 conda install -c conda-forge -c bioconda mmseqs2=17-b804f
 ```
 
