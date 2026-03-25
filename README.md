@@ -1,4 +1,4 @@
-# ECLIPSE — Dark Proteome Exploration of ESKAPE Pathogens
+# ECLIPSE —> Dark Proteome Exploration of ESKAPE Pathogens
 
 **ECLIPSE** (ESKAPE Connectome Linkage and Inference for Proteome Sequence Exploration) is a modular, pathogen-agnostic computational pipeline for the systematic identification and prioritisation of functionally uncharacterised ("dark") protein families in bacterial panproteomes.
 
