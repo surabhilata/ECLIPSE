@@ -140,9 +140,7 @@ conda install -c conda-forge -c bioconda mmseqs2=17-b804f
 **To generate `PA.m8`**, run MMseqs2 easy-search against the Atlas AFDB90 target database:
 
 ```bash
-mmseqs easy-search your_proteome.fasta AFDB90v4_target_db PA.m8 tmp \
-    --format-output "query,target,fident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bitscore" \
-    -s 7.5 --num-iterations 2 -e 1e-5
+After installation run in terminal: mmseqs easy-search PA_faa.tar.gz AFDBv4_90.fasta PA.m8 tmp --max-seqs 1
 ```
 
 ### Part II inputs
