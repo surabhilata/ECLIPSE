@@ -182,7 +182,7 @@ atlas_datafiles = [
 ]
 ```
 
-**Runtime:** approximately 2–4 hours depending on dataset size and available RAM. At least 32 GB RAM is recommended for loading the full Atlas data files.
+**Runtime:** approximately 30-60 minutes depending on dataset size and available RAM. At least 32 GB RAM is recommended for loading the full Atlas data files.
 
 ### Step 2 — Run Part II
 
@@ -202,7 +202,7 @@ atlas_datafiles = [
 mapped_p_aer_dataset = pd.read_csv('eclipse_search_results_component_dark.csv')
 ```
 
-**Runtime:** approximately 1–2 hours.
+**Runtime:** approximately 30-60 minutes.
 
 ### Step 3 — Run DPPS Scoring
 
@@ -215,8 +215,6 @@ Update the configuration block at the top of the notebook:
 ```python
 ECLIPSE_CSV        = './eclipse.csv'           # Part I output
 COMPONENTS_CSV     = './AFDB90v4_subgraphs_summary.csv'
-MDR_STRAINS_FILE   = './mdr_strains.txt'       # set to None to skip S5
-FOLDSEEK_TSV       = './foldseek_results.tsv'  # set to None to skip S4
 N_STRAINS          = 635                        # total strains in your dataset
 ```
 
@@ -302,9 +300,7 @@ ECLIPSE/
 
 ## Citation
 
-If you use ECLIPSE in your research, please cite:
 
-> Lata S. & Heinz D.W. (2025). *ECLIPSE: Exploring the dark proteome of ESKAPE pathogens through the sequence similarity network of the Protein Universe Atlas.* Bioinformatics, Oxford University Press. [DOI to be added]
 
 Please also cite the Protein Universe Atlas:
 
@@ -319,8 +315,6 @@ And MMseqs2:
 ## Contact
 
 **Surabhi Lata** — Department of Molecular Structural Biology, Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-
-**Prof. Dirk W. Heinz** (corresponding author) — Department of Molecular Structural Biology, HZI Braunschweig
 
 For questions about the pipeline, please open a GitHub Issue or contact the authors directly.
 
