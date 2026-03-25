@@ -157,7 +157,6 @@ After installation run in terminal: mmseqs easy-search PA_faa.tar.gz AFDBv4_90.f
 | `eclipse.csv` | Part I output |
 | `mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv` | Part II Track A output |
 | `mapped_p_aer_dataset_eskape_enriched_dark_components.csv` | Part II Track B output |
-| `mdr_strains.txt` | Optional — one strain accession per line for MDR conservation scoring (S5). Set to `None` in config to skip |
 
 ---
 
