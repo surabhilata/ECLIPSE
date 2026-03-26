@@ -252,7 +252,7 @@ Please also cite:
 **Surabhi Lata**  
 Department of Molecular Structural Biology
 Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-surabhi.lata@helmholtz-hzi.de
+surabhi.lata@helmholtz-hzi.de /
 surabhilata94@gmail.com
 
 For questions please open a GitHub Issue.
