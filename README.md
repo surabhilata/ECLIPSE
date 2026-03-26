@@ -225,7 +225,7 @@ Tier I stability scores are computed by Monte Carlo weight sensitivity analysis 
 
 ## Applying ECLIPSE to another ESKAPE pathogen
 
-1. Download protein FASTA files for your target pathogen from [PATRIC](https://www.patricbrc.org) — retain only strains with complete genome annotation.
+1. Download protein FASTA files for your target pathogen from (https://pseudomonas.com/) — retain only strains with complete genome annotation.
 2. Run MMseqs2 easy-search to generate your `.m8` file.
 3. Update all file paths in each notebook.
 4. Update `N_PA_STRAINS` in the DPPS notebook to match your strain count.
