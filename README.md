@@ -52,11 +52,12 @@ Your pathogen FASTA files
 |  ECLIPSE_PartII.ipynb                     |
 |                                           |
 |  - Load eclipse.csv + Atlas taxonomy      |
-|  - Add target species proportion per      |
-|    component from Atlas taxonomy files    |
+|  - Compute target_species_proportion      |
+|    per component from Atlas taxonomy      |
+|    (configurable: TARGET_SPECIES)         |
 |  - Track A -- Pathogen-specific:          |
 |    ESKAPE_proportion == 1.0               |
-|    all Atlas genus == target genus        |
+|    all Atlas genus == TARGET_GENUS        |
 |    e.g. 83 components for P. aeruginosa  |
 |  - Track B -- ESKAPE-enriched:            |
 |    ESKAPE_proportion >= 0.5               |
@@ -74,11 +75,12 @@ Your pathogen FASTA files
 |  - MMseqs2 easy-cluster (30% id, 80% cov) |
 |  - One representative per cluster         |
 |  - DPPS scoring:                          |
-|    S1 darkness                            |
-|    S2 target species proportion           |
-|    S3 AMR-clade specificity               |
-|    S4 strain coverage                     |
-|    S5 ESKAPE enrichment (Track B only)    |
+|    S1  darkness                           |
+|    S2b combined species evidence (TrackA) |
+|    S2  target species proportion (TrackB) |
+|    S3  AMR-clade specificity              |
+|    S4  strain coverage                    |
+|    S5  ESKAPE enrichment (Track B only)   |
 |  - Tier I-IV assignment                   |
 |  - Monte Carlo weight sensitivity (n=500) |
 |  - Figures and summary report             |
@@ -145,7 +147,7 @@ This produces your `.m8` file — the MMseqs2 alignment results that Part I read
 queryID  targetID  fident  alnlen  mismatch  gapopen  qstart  qend  tstart  tend  evalue  bitscore
 ```
 
-> **QueryID format requirement:** QueryIDs must follow the format `STRAINNAME_proteinID` with at least one underscore — for example `PAO1_PA0001` or `KPNIH1_KPN_00001`. QueryIDs without an underscore cannot be attributed to a strain and are automatically excluded from strain coverage calculation with a printed warning.
+> **QueryID format requirement:** QueryIDs must follow the format `STRAINNAME_proteinID` with at least one underscore — for example `PAO1_PA0001` or `SA_COL_SA0001`. QueryIDs without an underscore cannot be attributed to a strain and are automatically excluded from strain coverage calculation with a printed warning.
 
 ### Part I
 
@@ -164,7 +166,7 @@ Update the configuration block at the top of the notebook:
 
 ```python
 # ── USER CONFIGURATION ──────────────────────────────────────────────────────
-# Atlas data files -- paths to downloaded Atlas taxonomy files
+# Atlas data files
 atlas_datafiles = [
     'AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv',
     'AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv'
@@ -175,10 +177,19 @@ mapped_target_dataset = pd.read_csv('eclipse_search_results_component_dark.csv')
 
 # Target species and genus -- change for other ESKAPE pathogens
 # Must match exactly how the species/genus is written in the Atlas taxonomy files
-TARGET_SPECIES = 'Pseudomonas aeruginosa'   # e.g. 'Klebsiella pneumoniae'
-TARGET_GENUS   = 'Pseudomonas'              # e.g. 'Klebsiella'
+TARGET_SPECIES = 'Pseudomonas aeruginosa'   # e.g. 'Staphylococcus aureus'
+TARGET_GENUS   = 'Pseudomonas'              # e.g. 'Staphylococcus'
 # ────────────────────────────────────────────────────────────────────────────
 ```
+
+To check exact species and genus strings in the Atlas for your organism:
+
+```python
+# Run this after loading atlas_data to find exact string to use
+atlas_data[atlas_data['species'].str.contains('Staphylococcus')]['species'].unique()
+```
+
+Part II computes `target_species_proportion` per component — the fraction of Atlas members annotated as your target species. This column is used by the DPPS notebook for both S2 and S2b scoring.
 
 ### Part III — DPPS Scoring
 
@@ -219,8 +230,10 @@ No Atlas files are needed for Part III — all mapping and proportion calculatio
 |------|-----------|-------------|
 | `eclipse.csv` | Input | Part I output |
 | Atlas CSV files | Input | For target species proportion calculation |
-| `mapped_target_pathogen_specific_dark_components.csv` | **Output** | Track A -- pathogen-specific dark components |
-| `mapped_target_eskape_enriched_dark_components.csv` | **Output** | Track B -- ESKAPE-enriched dark components |
+| `mapped_target_pathogen_specific_dark_components.csv` | **Output** | Track A — pathogen-specific dark components |
+| `mapped_target_eskape_enriched_dark_components.csv` | **Output** | Track B — ESKAPE-enriched dark components |
+
+> **Note:** Output files include a `target_species_proportion` column — the fraction of Atlas members annotated as your target species. This is computed using `TARGET_SPECIES` and is used for S2 and S2b scoring in Part III.
 
 ### Part III — DPPS Scoring
 
@@ -235,23 +248,38 @@ No Atlas files are needed for Part III — all mapping and proportion calculatio
 | `dpps_tier1_track_b.csv` | **Output** | Tier I candidates Track B |
 | Figures (PDF + PNG) | **Output** | DPPS distributions, scatter plots, heatmaps, sensitivity analysis |
 
-> **Note on file naming:** Output files in the notebooks follow *P. aeruginosa* naming conventions as used in the associated publication (e.g. `mapped_p_aer_dataset_pseudomonas_specific_dark_components.csv`). When applying ECLIPSE to other ESKAPE pathogens, rename output files accordingly to reflect your target organism.
-
 ---
 
 ## DPPS scoring system
 
-Each dark connected component receives a composite DPPS calculated as a weighted sum of sub-scores. Weights differ between Track A (pathogen-specific) and Track B (ESKAPE-enriched) to reflect the distinct biological properties of each candidate set.
+Each dark connected component receives a composite DPPS calculated as a weighted sum of sub-scores. Track A (pathogen-specific) and Track B (ESKAPE-enriched) use different sub-score sets and weights reflecting their distinct biological properties.
 
 | Sub-score | Definition | Track A weight | Track B weight |
 |-----------|-----------|----------------|----------------|
 | S1 darkness | 1 - (brightness / 100) | 0.15 | 0.15 |
-| S2 target species proportion | Fraction of Atlas members annotated as target species | 0.40 | 0.25 |
+| S2b combined species evidence | max(target_species_proportion, strain_fraction) | 0.40 | -- |
+| S2 target species proportion | Fraction of Atlas members annotated as target species | -- | 0.25 |
 | S3 AMR-clade specificity | 1 - ESKAPE_relative_evenness | 0.25 | 0.20 |
 | S4 strain coverage | Unique strains carrying component / total strains | 0.20 | 0.15 |
 | S5 ESKAPE enrichment | ESKAPE_proportion x (1 - ESKAPE_genus_evenness) | -- | 0.25 |
 
 All sub-scores are normalised to [0, 1] prior to weighting. Weights sum to 1.0 within each track.
+
+### Why S2b for Track A and S2 for Track B
+
+Track A uses **S2b** (combined species evidence) instead of plain S2. S2b is defined as:
+
+```
+S2b = max(target_species_proportion, query_strain_fraction)
+```
+
+This formulation addresses a systematic limitation of Atlas species annotation — many genuine target-species sequences in UniProt are deposited under non-canonical labels (e.g. *Pseudomonas sp.* instead of *Pseudomonas aeruginosa*), causing `target_species_proportion` to be artificially suppressed to zero for components that are genuinely pathogen-specific. S2b corrects for this by taking the maximum of the Atlas-derived proportion and the query-level strain fraction, ensuring that components with near-universal conservation across the query strain collection are not penalised by annotation gaps.
+
+S2b is robust across ESKAPE pathogens:
+- When Atlas annotation is reliable (e.g. *S. aureus*, *K. pneumoniae*) — `target_species_proportion` is high and S2b naturally returns it.
+- When Atlas annotation has gaps (e.g. *P. aeruginosa* "Pseudomonas sp." labelling) — strain fraction rescues the signal.
+
+Track B uses standard **S2** because ESKAPE-enriched components span multiple genera and the annotation gap is less pronounced at the ESKAPE-group level than at the individual species level.
 
 ### Priority tiers
 
@@ -280,26 +308,22 @@ mmseqs easy-search your_proteome.fasta AFDBv4_90.fasta output.m8 tmp
 
 **Step 3** — Update the input file path in Part I to point to your `.m8` file.
 
-**Step 4** — In Part II update the two target configuration variables to match your organism. To check the exact species and genus strings used in the Atlas for your organism run this after loading the Atlas data:
+**Step 4** — In Part II update the two target configuration variables:
 
 ```python
-# Check exact species strings in Atlas for your organism
-atlas_data[atlas_data['species'].str.contains('Klebsiella')]['species'].unique()
-
-# Then set:
-TARGET_SPECIES = 'Klebsiella pneumoniae'   # exact string from above
-TARGET_GENUS   = 'Klebsiella'
+TARGET_SPECIES = 'Staphylococcus aureus'   # exact string in Atlas species column
+TARGET_GENUS   = 'Staphylococcus'          # exact string in Atlas genus column
 ```
 
 **Step 5** — In the DPPS notebook update the strain count:
 
 ```python
-N_STRAINS = [your total strain count]   # e.g. 1200 for K. pneumoniae
+N_STRAINS = [your total strain count]
 ```
 
-**Step 6** — Run Parts I, II, and III in order. No other changes to the code are required.
+**Step 6** — Run Parts I, II, and III in order.
 
-The DPPS weights and tier thresholds were designed to be transferable across ESKAPE organisms without pathogen-specific calibration.
+No other changes to the code are required. The S2b formula uses `target_species_proportion` computed from your `TARGET_SPECIES` setting, so it automatically searches for the correct species in the Atlas for any pathogen.
 
 ---
 
