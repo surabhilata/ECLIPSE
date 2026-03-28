@@ -9,353 +9,520 @@ ECLIPSE maps target-pathogen proteomes onto the global sequence similarity netwo
 
 ## Table of Contents
 
-- [Pipeline overview](#pipeline-overview)
-- [Requirements](#requirements)
-- [How to run](#how-to-run)
-- [Input and output files](#input-and-output-files)
-- [DPPS scoring system](#dpps-scoring-system)
-- [Applying ECLIPSE to another ESKAPE pathogen](#applying-eclipse-to-another-eskape-pathogen)
+- [Overview](#overview)
+- [Pipeline Architecture](#pipeline-architecture)
+- [Prerequisites](#prerequisites)
+- [Required Input Files](#required-input-files)
+- [Notebook Guide](#notebook-guide)
+  - [Part I — Atlas Mapping & Diversity Analysis](#part-i--atlas-mapping--diversity-analysis-eclipse_partiiipynb)
+  - [Part II — Genus-specific & ESKAPE-enriched Component Extraction](#part-ii--genus-specific--eskape-enriched-component-extraction-eclipse_partiiiipynb)
+  - [Part III — Clustering & DPPS Prioritization](#part-iii--clustering--dpps-prioritization-eclipse_dpps_scoreiipynb)
+- [Adapting to Your Pathogen](#adapting-to-your-pathogen)
+- [Output Files](#output-files)
+- [Key Concepts](#key-concepts)
+- [Troubleshooting](#troubleshooting)
 - [Citation](#citation)
-- [Contact](#contact)
 
 ---
 
-## Pipeline overview
+## Overview
 
-ECLIPSE runs as three sequential Jupyter notebooks. Each notebook must be completed before starting the next.
+The ECLIPSE pipeline answers one core question:
+
+> **Which proteins in my pathogen of interest are (1) functionally uncharacterized ("dark"), (2) evolutionarily restricted to AMR-relevant clades, and (3) conserved across many strains — making them promising unexplored drug targets?**
+
+It does this in three sequential stages:
+
+| Stage | Notebook | Purpose |
+|-------|----------|---------|
+| **I** | `ECLIPSE_PartI.ipynb` | Map proteome to ESM Atlas → compute community/component darkness & taxonomic diversity |
+| **II** | `ECLIPSE_PartII.ipynb` | Extract pathogen-specific and ESKAPE-enriched dark components |
+| **III** | `ECLIPSE_DPPS_score.ipynb` | Cluster proteins → score components with DPPS → rank & visualize candidates |
+
+---
+
+## Pipeline Architecture
 
 ```
-Your pathogen FASTA files 
-        |
-        v  MMseqs2 easy-search (run before Part I)
-        |
-+-------------------------------------------+
-|  ECLIPSE_PartI.ipynb                      |
-|                                           |
-|  - Load MMseqs2 search results (.m8)      |
-|  - Map proteins -> Atlas communities      |
-|  - Map communities -> connected components|
-|  - Classify dark communities (0%)         |
-|  - Classify dark components (0%)          |
-|  - Compute ESKAPE taxonomic diversity:    |
-|    - ESKAPE_proportion                    |
-|    - ESKAPE_genus_evenness                |
-|    - ESKAPE_relative_evenness             |
-|                                           |
-|  Output -> eclipse.csv                    |
-+------------------+------------------------+
-                   |
-                   v
-+-------------------------------------------+
-|  ECLIPSE_PartII.ipynb                     |
-|                                           |
-|  - Load eclipse.csv + Atlas taxonomy      |
-|  - Compute target_species_proportion      |
-|    per component from Atlas taxonomy      |
-|    (configurable: TARGET_SPECIES)         |
-|  - Track A -- Pathogen-specific:          |
-|    ESKAPE_proportion == 1.0               |
-|    all Atlas genus == TARGET_GENUS        |
-|    e.g. 83 components for P. aeruginosa  |
-|  - Track B -- ESKAPE-enriched:            |
-|    ESKAPE_proportion >= 0.5               |
-|    excluding Track A                      |
-|    e.g. 215 components for P. aeruginosa |
-|                                           |
-|  Output -> two track CSV files            |
-+------------------+------------------------+
-                   |
-                   v
-+-------------------------------------------+
-|  ECLIPSE_DPPS_score.ipynb                 |
-|                                           |
-|  - Median length filter (>= 300 aa)       |
-|  - MMseqs2 easy-cluster (30% id, 80% cov) |
-|  - One representative per cluster         |
-|  - DPPS scoring:                          |
-|    S1  darkness                           |
-|    S2b combined species evidence (TrackA) |
-|    S2  target species proportion (TrackB) |
-|    S3  AMR-clade specificity              |
-|    S4  strain coverage                    |
-|    S5  ESKAPE enrichment (Track B only)   |
-|  - Tier I-IV assignment                   |
-|  - Monte Carlo weight sensitivity (n=500) |
-|  - Figures and summary report             |
-|                                           |
-|  Output -> scored CSVs + figures          |
-+-------------------------------------------+
+Your proteome FASTA files (one or many strains)
+            │
+            ▼
+   MMseqs2 easy-search
+   (vs. AFDBv4_90.fasta)
+            │
+            ▼
+         PA.m8 (alignment results)
+            │
+            ▼
+    ECLIPSE_PartI.ipynb
+    ┌─────────────────────────────────────────────┐
+    │ • Load Atlas community & component data      │
+    │ • Map each protein → UniRef50 → community   │
+    │ • Assign darkness (brightness) values        │
+    │ • Compute ESKAPE taxonomic diversity metrics │
+    │ • Save eclipse.csv / eclipse_seq.csv         │
+    └─────────────────────────────────────────────┘
+            │
+            ▼
+    ECLIPSE_PartII.ipynb
+    ┌─────────────────────────────────────────────┐
+    │ • Filter dark components (brightness ≤ 5%)  │
+    │ • Track A: pathogen-genus-specific comps    │
+    │ • Track B: ESKAPE-enriched components       │
+    │ • Add species-level proportions             │
+    │ • Save two track CSVs                       │
+    └─────────────────────────────────────────────┘
+            │
+            ▼
+    ECLIPSE_DPPS_score.ipynb
+    ┌─────────────────────────────────────────────┐
+    │ • Length filter (≥ 300 aa by median)        │
+    │ • Export FASTA per track                    │
+    │ • MMseqs2 easy-cluster (redundancy removal) │
+    │ • Build component-level tables              │
+    │ • Compute DPPS sub-scores (S1–S5)           │
+    │ • Monte Carlo weight sensitivity (n=500)    │
+    │ • Tier ranking (I–IV) + visualizations      │
+    └─────────────────────────────────────────────┘
+            │
+            ▼
+    Ranked candidate drug target lists
+    (dpps_tier1_*.csv, dpps_all_representatives_combined.csv)
 ```
 
 ---
 
-## Requirements
+## Prerequisites
 
-### Python packages
+### Software
 
-All standard packages — install via pip if not already available:
+| Tool | Version | Purpose | Install |
+|------|---------|---------|---------|
+| Python | ≥ 3.8 | Core environment | [python.org](https://python.org) |
+| Jupyter | any | Run notebooks | `pip install jupyter` |
+| MMseqs2 | latest | Sequence search & clustering | [MMseqs2 GitHub](https://github.com/soedinglab/MMseqs2) |
 
-```
-pandas    numpy    matplotlib    seaborn    tqdm    pyyaml    biopython
-```
-
-### External tool
-
-| Tool | Version | Used for |
-|------|---------|----------|
-| [MMseqs2](https://github.com/soedinglab/MMseqs2) | 17-b804f | Sequence search (before Part I) and clustering (Part III) |
-
-Install MMseqs2:
+### Python Packages
 
 ```bash
-conda install -c conda-forge -c bioconda mmseqs2=17-b804f
+pip install pandas numpy matplotlib seaborn biopython tqdm pyyaml
 ```
 
-### Atlas data files
+Or using conda/mamba:
 
-The following large files from the Protein Universe Atlas must be downloaded separately and placed in the same directory as the notebooks. They are not included in this repository due to their size (~8 GB total).
+```bash
+mamba create -n eclipse python=3.10
+mamba activate eclipse
+mamba install pip jupyter
+pip install pandas numpy matplotlib seaborn biopython tqdm pyyaml
+```
 
-| File | Used in |
-|------|---------|
-| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Part I, Part II |
-| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | Part I, Part II |
-| `AFDB90v4_subgraphs_summary.csv` | Part I |
+### MMseqs2
 
-Download from Zenodo: https://doi.org/10.5281/zenodo.19119408
+MMseqs2 must be accessible from the command line (`mmseqs` in PATH). Verify with:
 
-Note: These files are produced by Durairaj et al. (2023) — see the original paper: https://www.nature.com/articles/s41586-023-06622-3
+```bash
+mmseqs --version
+```
 
 ---
 
-## How to run
+## Required Input Files
 
-Open each notebook in Jupyter and run all cells from top to bottom in order.
+You need to download the **ESM Metagenomic Atlas** files. These are large; download them once and reuse across analyses.
 
-### Before Part I — run MMseqs2 search
+| File | Description | Where to Get |
+|------|-------------|--------------|
+| `AFDBv4_90.fasta` | Atlas UniRef50 representative sequences | [ESM Atlas](https://esmatlas.com/resources) |
+| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (connected components) | [ESM Atlas](https://esmatlas.com/resources) |
+| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (DUST regions) | [ESM Atlas](https://esmatlas.com/resources) |
+| `AFDB90v4_subgraphs_summary.csv` | Component-level summary statistics | [ESM Atlas](https://esmatlas.com/resources) |
 
-Search your pathogen proteome against the Atlas AFDB90v4 database:
+Your own input files:
+
+| File | Description | Format |
+|------|-------------|--------|
+| `<organism>_faa.tar.gz` or individual `.faa` files | Protein FASTA files for your pathogen strains | FASTA (`.faa`) |
+
+> **Naming convention for strain tracking:** Name each protein sequence as `STRAINNAME_PROTEINID` (e.g., `PAO1_PA0001`). The pipeline extracts the strain name from the prefix before the first underscore to compute strain coverage (S4 score). If your IDs do not follow this convention, strain coverage calculation will not work correctly — see [Adapting to Your Pathogen](#adapting-to-your-pathogen).
+
+---
+
+## Notebook Guide
+
+### Part I — Atlas Mapping & Diversity Analysis (`ECLIPSE_PartI.ipynb`)
+
+**What it does:** Maps every protein in your dataset to a community and component in the ESM Atlas, then computes darkness and taxonomic diversity metrics.
+
+#### Step 0 — Run MMseqs2 (outside the notebook, in terminal)
+
+Before opening the notebook, run the sequence search against the Atlas:
 
 ```bash
-mmseqs easy-search your_proteome.fasta AFDBv4_90.fasta output.m8 tmp
+# If your FASTAs are in a tar.gz archive:
+mmseqs easy-search <organism>_faa.tar.gz AFDBv4_90.fasta <organism>.m8 tmp --max-seqs 1
+
+# If your FASTAs are in a directory of individual .faa files, merge them first:
+cat ./faa/*.faa > all_proteins.faa
+mmseqs easy-search all_proteins.faa AFDBv4_90.fasta <organism>.m8 tmp --max-seqs 1
 ```
 
-This produces your `.m8` file — the MMseqs2 alignment results that Part I reads as input. For each query protein only the best match is retained. Output format is standard BLAST-6:
+> `--max-seqs 1` keeps only the single best Atlas match per query protein.
 
-```
-queryID  targetID  fident  alnlen  mismatch  gapopen  qstart  qend  tstart  tend  evalue  bitscore
-```
-
-> **QueryID format requirement:** QueryIDs must follow the format `STRAINNAME_proteinID` with at least one underscore — for example `PAO1_PA0001` or `SA_COL_SA0001`. QueryIDs without an underscore cannot be attributed to a strain and are automatically excluded from strain coverage calculation with a printed warning.
-
-### Part I
-
-Update the file path at the top of the notebook:
+#### Step 1 — Configure paths (Cell 3)
 
 ```python
-# Path to your MMseqs2 search output
-atlas_search_results_info = ['./output.m8']
+# Cell 3 — change the filename to match your MMseqs2 output
+atlas_search_results_info = ['./<organism>.m8']
 ```
 
-**Memory note:** at least 32 GB RAM recommended — the Atlas taxonomy files are ~4 GB each.
+#### Step 2 — Load Atlas data (Cell 5)
 
-### Part II
-
-Update the configuration block at the top of the notebook:
+Ensure the Atlas CSV files are in the same directory as the notebook (or update paths):
 
 ```python
-# ── USER CONFIGURATION ──────────────────────────────────────────────────────
-# Atlas data files
 atlas_datafiles = [
     'AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv',
     'AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv'
 ]
-
-# Part I output file
-mapped_target_dataset = pd.read_csv('eclipse_search_results_component_dark.csv')
-
-# Target species and genus -- change for other ESKAPE pathogens
-# Must match exactly how the species/genus is written in the Atlas taxonomy files
-TARGET_SPECIES = 'Pseudomonas aeruginosa'   # e.g. 'Staphylococcus aureus'
-TARGET_GENUS   = 'Pseudomonas'              # e.g. 'Staphylococcus'
-# ────────────────────────────────────────────────────────────────────────────
 ```
 
-To check exact species and genus strings in the Atlas for your organism:
+#### Step 3 — Update the ESKAPE genus list if needed (Cell 24–25)
+
+By default the pipeline uses the full ESKAPE list:
 
 ```python
-# Run this after loading atlas_data to find exact string to use
-atlas_data[atlas_data['species'].str.contains('Staphylococcus')]['species'].unique()
+# Cell 25 — ESKAPE genera used for taxonomic labeling
+ESKAPE_genera = [
+    'Acinetobacter', 'Enterococcus', 'Escherichia',
+    'Klebsiella', 'Pseudomonas', 'Staphylococcus', 'Enterobacter'
+]
 ```
 
-Part II computes `target_species_proportion` per component — the fraction of Atlas members annotated as your target species. This column is used by the DPPS notebook for both S2 and S2b scoring.
-
-### Part III — DPPS Scoring
-
-Update the configuration block at the top of the notebook:
+You can add or remove genera. For example, to include *Burkholderia*:
 
 ```python
-# ── USER CONFIGURATION ──────────────────────────────────────────────────────
-# Input files (Part II outputs)
-PS_CSV = './mapped_target_pathogen_specific_dark_components.csv'
-ES_CSV = './mapped_target_eskape_enriched_dark_components.csv'
-
-# Total number of strains in your input dataset
-N_STRAINS   = 635     # 635 for P. aeruginosa -- change for other pathogens
-
-# Minimum median component sequence length for structural characterisation
-MIN_SEQ_LEN = 300     # amino acids
-# ────────────────────────────────────────────────────────────────────────────
+ESKAPE_genera = [
+    'Acinetobacter', 'Enterococcus', 'Escherichia',
+    'Klebsiella', 'Pseudomonas', 'Staphylococcus', 'Enterobacter', 'Burkholderia'
+]
 ```
 
-No Atlas files are needed for Part III — all mapping and proportion calculation was done in Parts I and II.
+#### Step 4 — Add sequences to results (Cells 39–44)
+
+Update the directory path to point to your FASTA files:
+
+```python
+# Cell 40
+directory_path = './faa'   # ← change to your FASTA directory
+```
+
+#### Outputs from Part I
+
+| File | Contents |
+|------|----------|
+| `eclipse.csv` | All query proteins with Atlas mapping & diversity metrics |
+| `eclipse_seq.csv` | Same as above with protein sequences added |
+| `dark_communities.png` | Histogram of functional brightness at community level |
+| `components_darkness.png` | Histogram of functional brightness at component level |
+| `taxonomic_diversity_of_All_components.png` | Scatter plot of diversity metrics for all components |
+| `taxonomic_diversity_of_dark_components.png` | Same, restricted to dark components |
 
 ---
 
-## Input and output files
+### Part II — Genus-specific & ESKAPE-enriched Component Extraction (`ECLIPSE_PartII.ipynb`)
 
-### Part I
+**What it does:** Takes the dark-component subset from Part I and separates it into two biologically meaningful tracks for downstream prioritization.
 
-| File | Direction | Description |
-|------|-----------|-------------|
-| `output.m8` | Input | MMseqs2 search results — your proteome vs AFDB90v4 |
-| Atlas CSV files | Input | Community and component brightness and taxonomy |
-| `AFDB90v4_subgraphs_summary.csv` | Input | Component-level summary statistics |
-| `eclipse.csv` | **Output** | All query proteins with community IDs, component IDs, brightness values, and ESKAPE diversity metrics |
+#### Step 1 — Load Atlas data (Cell 2)
 
-### Part II
+Same Atlas CSV files as Part I. Update paths if needed.
 
-| File | Direction | Description |
-|------|-----------|-------------|
-| `eclipse.csv` | Input | Part I output |
-| Atlas CSV files | Input | For target species proportion calculation |
-| `mapped_target_pathogen_specific_dark_components.csv` | **Output** | Track A — pathogen-specific dark components |
-| `mapped_target_eskape_enriched_dark_components.csv` | **Output** | Track B — ESKAPE-enriched dark components |
+#### Step 2 — Load the dark component dataset (Cell 3)
 
-> **Note:** Output files include a `target_species_proportion` column — the fraction of Atlas members annotated as your target species. This is computed using `TARGET_SPECIES` and is used for S2 and S2b scoring in Part III.
+```python
+# Cell 3 — point to your Part I output
+mapped_dataset = pd.read_csv('eclipse_search_results_component_dark.csv', index_col='Unnamed: 0')
+```
 
-### Part III — DPPS Scoring
+> **How to generate this file:** At the end of Part I, filter `eclipse_seq.csv` for dark components (e.g., `component_brightness <= 5`) and save it. This filtered file is the input to Part II.
 
-| File | Direction | Description |
-|------|-----------|-------------|
-| Track A and Track B CSVs | Input | Part II outputs |
-| `dpps_components_track_a.csv` | **Output** | Track A components with DPPS sub-scores and tier |
-| `dpps_components_track_b.csv` | **Output** | Track B components with DPPS sub-scores and tier |
-| `dpps_representatives_track_a.csv` | **Output** | Track A representative sequences with scores |
-| `dpps_representatives_track_b.csv` | **Output** | Track B representative sequences with scores |
-| `dpps_tier1_track_a.csv` | **Output** | Tier I candidates Track A |
-| `dpps_tier1_track_b.csv` | **Output** | Tier I candidates Track B |
-| Figures (PDF + PNG) | **Output** | DPPS distributions, scatter plots, heatmaps, sensitivity analysis |
+#### Step 3 — Adapt genus-specific filtering (Cells 6–7)
+
+**Track A — pathogen-genus-specific components:**
+
+The default filters for *Pseudomonas*. Change the genus name for your organism:
+
+```python
+# Cell 7 — replace 'Pseudomonas' with your genus of interest
+filtered_components = selected_atlas_data.groupby("componentIDs").filter(
+    lambda x: (x["genus"] == "Pseudomonas").all()   # ← change here
+)
+```
+
+For *Staphylococcus aureus*, use `"Staphylococcus"`. For *Klebsiella pneumoniae*, use `"Klebsiella"`, etc.
+
+**Track B — ESKAPE-enriched components:**
+
+```python
+# Cell 12 — adjust ESKAPE_proportion threshold if desired (default 0.5)
+mapped_dataset_eskape_enriched = mapped_dataset.loc[
+    (mapped_dataset['ESKAPE_proportion'] >= 0.5) &
+    (~mapped_dataset['componentID'].isin(genus_specific_components['componentID']))
+]
+```
+
+#### Outputs from Part II
+
+| File | Contents |
+|------|----------|
+| `mapped_<genus>_dataset_<genus>_specific_dark_components.csv` | Track A: genus-specific dark components |
+| `mapped_<genus>_dataset_eskape_enriched_dark_components.csv` | Track B: ESKAPE-enriched dark components |
 
 ---
 
-## DPPS scoring system
+### Part III — Clustering & DPPS Prioritization (`ECLIPSE_DPPS_score.ipynb`)
 
-Each dark connected component receives a composite DPPS calculated as a weighted sum of sub-scores. Track A (pathogen-specific) and Track B (ESKAPE-enriched) use different sub-score sets and weights reflecting their distinct biological properties.
+**What it does:** Clusters redundant sequences, builds component-level scoring tables, computes the DPPS composite score, performs Monte Carlo weight sensitivity analysis, and produces ranked output tables and publication-ready figures.
 
-| Sub-score | Definition | Track A weight | Track B weight |
-|-----------|-----------|----------------|----------------|
-| S1 darkness | 1 - (brightness / 100) | 0.15 | 0.15 |
-| S2b combined species evidence | max(target_species_proportion, strain_fraction) | 0.40 | -- |
-| S2 target species proportion | Fraction of Atlas members annotated as target species | -- | 0.25 |
-| S3 AMR-clade specificity | 1 - ESKAPE_relative_evenness | 0.25 | 0.20 |
-| S4 strain coverage | Unique strains carrying component / total strains | 0.20 | 0.15 |
-| S5 ESKAPE enrichment | ESKAPE_proportion x (1 - ESKAPE_genus_evenness) | -- | 0.25 |
+#### Step 1 — Configure input files and parameters (Cell 3)
 
-All sub-scores are normalised to [0, 1] prior to weighting. Weights sum to 1.0 within each track.
+```python
+# ── Input files (Part II outputs) ──────────────────────────────────────────
+PS_CSV = './mapped_<genus>_dataset_<genus>_specific_dark_components.csv'   # Track A
+ES_CSV = './mapped_<genus>_dataset_eskape_enriched_dark_components.csv'    # Track B
 
-### Why S2b for Track A and S2 for Track B
+# ── Key parameter: total number of strains in YOUR dataset ─────────────────
+N_STRAINS = 635   # ← MUST change this to match your dataset
 
-Track A uses **S2b** (combined species evidence) instead of plain S2. S2b is defined as:
+# ── Sequence length filter ─────────────────────────────────────────────────
+MIN_SEQ_LEN = 300   # minimum median component sequence length in amino acids
 
+# ── MMseqs2 clustering parameters ─────────────────────────────────────────
+MMSEQS_MIN_SEQ_ID = 0.3   # sequence identity threshold for clustering
+MMSEQS_COVERAGE   = 0.8   # coverage threshold for clustering
 ```
-S2b = max(target_species_proportion, query_strain_fraction)
+
+> **`N_STRAINS` is the most critical parameter to update.** It determines the strain coverage sub-score (S4). Set it to the total number of genomes/strains in your input FASTA dataset.
+
+#### Step 2 — Adjust DPPS weights if needed (Cell 3)
+
+The default weights are tuned for *P. aeruginosa*. You can adjust them per track:
+
+**Track A weights (pathogen-genus-specific):**
+
+```python
+WEIGHTS_PS = {
+    'S1_darkness':           0.15,   # flat 1.0 for all dark components
+    'S2b_pa_combined':       0.40,   # max(Atlas species proportion, strain fraction)
+    'S3_specificity':        0.25,   # 1 - ESKAPE_relative_evenness
+    'S4_pa_strain_coverage': 0.20,   # unique strains / N_STRAINS
+}
+# Weights must sum to 1.0
 ```
 
-This formulation addresses a systematic limitation of Atlas species annotation — many genuine target-species sequences in UniProt are deposited under non-canonical labels (e.g. *Pseudomonas sp.* instead of *Pseudomonas aeruginosa*), causing `target_species_proportion` to be artificially suppressed to zero for components that are genuinely pathogen-specific. S2b corrects for this by taking the maximum of the Atlas-derived proportion and the query-level strain fraction, ensuring that components with near-universal conservation across the query strain collection are not penalised by annotation gaps.
+**Track B weights (ESKAPE-enriched):**
 
-S2b is robust across ESKAPE pathogens:
-- When Atlas annotation is reliable (e.g. *S. aureus*, *K. pneumoniae*) — `target_species_proportion` is high and S2b naturally returns it.
-- When Atlas annotation has gaps (e.g. *P. aeruginosa* "Pseudomonas sp." labelling) — strain fraction rescues the signal.
+```python
+WEIGHTS_ES = {
+    'S1_darkness':           0.15,
+    'S2_pa_proportion':      0.25,   # Atlas-derived species proportion
+    'S3_specificity':        0.20,
+    'S4_pa_strain_coverage': 0.15,
+    'S5_eskape_enrich':      0.25,   # ESKAPE_proportion × (1 - ESKAPE_genus_evenness)
+}
+```
 
-Track B uses standard **S2** because ESKAPE-enriched components span multiple genera and the annotation gap is less pronounced at the ESKAPE-group level than at the individual species level.
+> If your pathogen has reliable species-level annotation in UniProt (unlike *P. aeruginosa*, which suffers from widespread "Pseudomonas sp." entries), you can replace `S2b_pa_combined` with the simpler `S2_pa_proportion` in Track A as well, and redistribute weights accordingly.
 
-### Priority tiers
+#### Step 3 — Rename species-specific column references
 
-| Tier | DPPS | Description |
-|------|------|-------------|
-| Tier I | >= 0.75 | Highest priority -- experimental follow-up recommended |
-| Tier II | 0.50-0.75 | High priority |
-| Tier III | 0.25-0.50 | Moderate priority |
-| Tier IV | < 0.25 | Background |
+Throughout the notebook, `p_aeruginosa_proportion` refers to the fraction of Atlas members annotated as the target species. When you run Part II for a different organism, rename this column for clarity (or simply update the references in Part III):
 
-Tier I stability scores are computed by Monte Carlo weight sensitivity analysis (500 Dirichlet-sampled weight vectors). Components with stability >= 0.80 are considered robustly prioritised independent of weight choice.
+```python
+# In Part II, when computing species proportion, rename the output column:
+components_with_prob.rename(columns={'p_aeruginosa_proportion': 's_aureus_proportion'}, inplace=True)
+
+# Then update references in Part III accordingly:
+comp['S2_pa_proportion'] = comp['s_aureus_proportion'].clip(0, 1)
+```
+
+#### DPPS Sub-score Definitions
+
+| Sub-score | Formula | Track A weight | Track B weight |
+|-----------|---------|----------------|----------------|
+| S1 — darkness | `1 − (component_brightness / 100)` | 0.15 | 0.15 |
+| S2b — combined species evidence *(Track A)* | `max(Atlas species proportion, strain fraction)` | 0.40 | — |
+| S2 — species proportion *(Track B)* | Atlas fraction annotated as target species | — | 0.25 |
+| S3 — taxonomic specificity | `1 − ESKAPE_relative_evenness` | 0.25 | 0.20 |
+| S4 — strain coverage | `unique strains in component / N_STRAINS` | 0.20 | 0.15 |
+| S5 — ESKAPE enrichment *(Track B)* | `ESKAPE_proportion × (1 − ESKAPE_genus_evenness)` | — | 0.25 |
+
+#### Tier Thresholds
+
+| Tier | DPPS range | Interpretation |
+|------|-----------|----------------|
+| I | ≥ 0.75 | High-priority candidates |
+| II | 0.50 – 0.75 | Moderate priority |
+| III | 0.25 – 0.50 | Low priority |
+| IV | < 0.25 | Deprioritized |
+
+#### Outputs from Part III
+
+| File | Contents |
+|------|----------|
+| `dpps_components_pseudomonas_specific.csv` | Track A component-level scores |
+| `dpps_components_eskape_enriched.csv` | Track B component-level scores |
+| `dpps_representatives_pseudomonas_specific.csv` | Track A representative proteins with scores |
+| `dpps_representatives_eskape_enriched.csv` | Track B representative proteins with scores |
+| `dpps_tier1_pseudomonas_specific.csv` | Tier I candidates — Track A |
+| `dpps_tier1_eskape_enriched.csv` | Tier I candidates — Track B |
+| `dpps_all_representatives_combined.csv` | Both tracks merged, sorted by DPPS |
+| `dpps_distribution_both_tracks.pdf` | DPPS histogram by tier |
+| `dpps_pa_proportion_scatter.pdf` | Species proportion vs DPPS scatter |
+| `dpps_heatmap_pseudomonas_specific.pdf` | Sub-score heatmap — top 30 Tier I (Track A) |
+| `dpps_heatmap_eskape_enriched.pdf` | Sub-score heatmap — top 30 Tier I (Track B) |
+| `pa_strain_coverage_distribution.pdf` | Strain fraction distribution |
 
 ---
 
-## Applying ECLIPSE to another ESKAPE pathogen
+## Adapting to Your Pathogen
 
-ECLIPSE is designed to be fully pathogen-agnostic. To apply it to any ESKAPE pathogen follow these steps.
+Here is a concise checklist for running ECLIPSE on a new organism:
 
-**Step 1** — Download protein FASTA files for your target pathogen from [PATRIC](https://www.patricbrc.org), retaining only strains with complete genome annotation.
+### 1. Prepare your FASTA files
 
-**Step 2** — Run MMseqs2 easy-search to generate your `.m8` file:
+- Collect annotated proteome FASTAs for as many strains as possible.
+- Name each sequence: `STRAINNAME_PROTEINID` (e.g., `NCTC8325_SA0001`).
+- Store FASTAs in a `./faa/` directory or package into `<organism>_faa.tar.gz`.
+
+### 2. Run MMseqs2 (terminal)
 
 ```bash
-mmseqs easy-search your_proteome.fasta AFDBv4_90.fasta output.m8 tmp
+mmseqs easy-search <organism>_faa.tar.gz AFDBv4_90.fasta <organism>.m8 tmp --max-seqs 1
 ```
 
-**Step 3** — Update the input file path in Part I to point to your `.m8` file.
+### 3. Part I — update 3 things
 
-**Step 4** — In Part II update the two target configuration variables:
+| Cell | What to change | Example (S. aureus) |
+|------|---------------|---------------------|
+| Cell 3 | `atlas_search_results_info` | `['./SA.m8']` |
+| Cell 25 | `genus_modifed` genus list (AMR genera) | keep default or extend |
+| Cell 40 | `directory_path` | `'./faa'` |
 
+### 4. Part II — update 3 things
+
+| Cell | What to change | Example (S. aureus) |
+|------|---------------|---------------------|
+| Cell 3 | Input CSV filename | `'eclipse_search_results_component_dark.csv'` |
+| Cell 5 | Species proportion — change `'Pseudomonas aeruginosa'` | `'Staphylococcus aureus'` |
+| Cell 7 | Genus filter for Track A | `(x["genus"] == "Staphylococcus").all()` |
+
+### 5. Part III — update 4 things
+
+| Location | What to change | Example (S. aureus, 500 strains) |
+|----------|---------------|----------------------------------|
+| Cell 3 `PS_CSV` / `ES_CSV` | Input filenames | Match Part II output names |
+| Cell 3 `N_STRAINS` | Total strain count in your dataset | `500` |
+| Throughout | `p_aeruginosa_proportion` column name | `s_aureus_proportion` |
+| Cell 3 weights | Adjust if annotation quality differs | Consider reducing S2b weight if species annotation is reliable |
+
+---
+
+## Output Files
+
+### Key columns in `eclipse.csv` / `eclipse_seq.csv`
+
+| Column | Description |
+|--------|-------------|
+| `queryID` | Protein identifier from your input FASTA |
+| `targetID` | Best-matching UniRef50 representative in the Atlas |
+| `fident` | Fraction of identical residues in the alignment |
+| `communityID` | Atlas community to which the match belongs |
+| `brightness` | Functional brightness of the community (0 = fully dark) |
+| `componentID` | Atlas component (subgraph) to which the match belongs |
+| `component_brightness` | Median brightness of the component |
+| `ESKAPE_relative_evenness` | Shannon evenness across all genera (AMR genera merged); 0 = ESKAPE-exclusive |
+| `ESKAPE_genus_evenness` | Shannon evenness within AMR genera only; 0 = single-genus |
+| `ESKAPE_proportion` | Fraction of component proteins from AMR genera |
+
+### Key columns in DPPS output files
+
+| Column | Description |
+|--------|-------------|
+| `componentID` | Atlas component identifier |
+| `DPPS` | Composite prioritization score (0–1, higher = better candidate) |
+| `tier` | Priority tier (I = highest) |
+| `S1_darkness` | Darkness sub-score |
+| `S2b_pa_combined` / `S2_pa_proportion` | Species evidence sub-score |
+| `S3_specificity` | Taxonomic specificity sub-score |
+| `S4_pa_strain_coverage` | Strain coverage sub-score |
+| `S5_eskape_enrich` | ESKAPE enrichment sub-score (Track B only) |
+| `PA_strain_count` | Number of strains carrying this component |
+| `PA_strain_fraction` | Fraction of total strains carrying this component |
+| `tier1_stability` | Fraction of Monte Carlo replicates (n=500) where component reaches Tier I |
+| `cluster_size` | Number of sequences in the MMseqs2 cluster represented by this protein |
+
+---
+
+## Key Concepts
+
+**Functional brightness / darkness:** A metric from the ESM Metagenomic Atlas quantifying the fraction of proteins in a community that have functional annotations. A brightness of 0% means no protein in the community has a known function — a "dark" community. Components with median brightness ≤ 5% are considered dark in this pipeline.
+
+**Community vs. component:** In the Atlas, proteins are grouped into *communities* based on structural similarity. Communities that are connected in the global similarity network form larger *components* (subgraphs). Darkness is assessed at both levels.
+
+**ESKAPE_relative_evenness:** A normalized Shannon diversity index computed over all genera in a component, where all ESKAPE genera are merged into a single "AMR genus" label. A value of 0 means the component is exclusively occupied by ESKAPE proteins. A higher value indicates proteins from non-ESKAPE organisms are also present.
+
+**ESKAPE_genus_evenness:** Same index but computed only within ESKAPE organisms. A value of 0 means all ESKAPE proteins in the component come from a single genus (maximally genus-specific). Higher values indicate multi-genus ESKAPE components.
+
+**S2b (combined PA evidence):** Introduced for Track A because species names like "Pseudomonas sp." in UniProt suppress the Atlas-derived species proportion despite genuine conservation. S2b takes the maximum of the Atlas proportion and the query strain fraction, correcting for this annotation gap.
+
+**Monte Carlo sensitivity analysis:** Weights are randomly sampled from a Dirichlet distribution (n=500 replicates) and DPPS is recomputed each time. `tier1_stability` reports how often a component reaches Tier I across all replicates — a value ≥ 0.8 indicates the ranking is robust to weight uncertainty.
+
+---
+
+## Troubleshooting
+
+**`KeyError: 'LongLink'` in Part I Cell 43**
+Some MMseqs2 versions truncate very long sequence names to "LongLink". Identify and drop these rows:
 ```python
-TARGET_SPECIES = 'Staphylococcus aureus'   # exact string in Atlas species column
-TARGET_GENUS   = 'Staphylococcus'          # exact string in Atlas genus column
+atlas_search_results.drop(
+    index=atlas_search_results.index[atlas_search_results['queryID'] == 'LongLink'],
+    inplace=True
+)
 ```
 
-**Step 5** — In the DPPS notebook update the strain count:
-
+**Warning: `N_STRAINS` mismatch**
+If `PA_strain_fraction` values exceed 1.0, your `N_STRAINS` is set too low. Count your strains:
 ```python
-N_STRAINS = [your total strain count]
+all_strains = set(df['queryID'].str.split('_').str[0])
+print(f"Detected {len(all_strains)} unique strain prefixes")
 ```
 
-**Step 6** — Run Parts I, II, and III in order.
+**MMseqs2 clustering fails**
+Ensure `mmseqs` is in PATH and the FASTA files were written correctly. Check:
+```bash
+wc -l track_ps_pseudomonas_specific.fasta  # should be 2× number of sequences
+mmseqs easy-cluster track_ps_pseudomonas_specific.fasta cluster_ps tmp --min-seq-id 0.3 -c 0.8
+```
 
-No other changes to the code are required. The S2b formula uses `target_species_proportion` computed from your `TARGET_SPECIES` setting, so it automatically searches for the correct species in the Atlas for any pathogen.
+**`values[0]` IndexError in Part I (mapping loops)**
+This occurs when a `targetID` in the search results is not present in the Atlas data. This can happen if the Atlas CSV files are incomplete. Verify file integrity and that both `cc` and `dust` Atlas files were loaded.
+
+**No Tier I components found**
+Lower your `MMSEQS_MIN_SEQ_ID` to include more diverse sequences, or adjust `TIER_BINS` to broaden the Tier I threshold. Alternatively, re-examine whether your `N_STRAINS` value is correct — an incorrect count will suppress S4 scores.
 
 ---
 
 ## Citation
 
-If you use ECLIPSE in your research please cite:
+If you use ECLIPSE in your research, please cite:
 
-> Lata S. & Heinz D.W. (2025). *ECLIPSE: Exploring the dark proteome of ESKAPE pathogens through the sequence similarity network of the Protein Universe Atlas.* Bioinformatics, Oxford University Press. [DOI to be added upon acceptance]
-
-Please also cite the Protein Universe Atlas:
-
-> Durairaj J. et al. (2023). *Exploring the functional universe of protein families.* Nature, 626, 582-589. https://doi.org/10.1038/s41586-023-06716-0
-
-And MMseqs2:
-
-> Steinegger M. & Söding J. (2017). *MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets.* Nature Biotechnology, 35, 1026-1028. https://doi.org/10.1038/nbt.3988
+> [Your citation here]
 
 ---
 
-## Contact
+## License
 
-**Surabhi Lata**
-Department of Molecular Structural Biology
-Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-surabhi.lata@helmholtz-hzi.de / surabhilata94@gmail.com
+[Your license here]
 
-**Prof. Dirk W. Heinz** (corresponding author)
-Department of Molecular Structural Biology
-Helmholtz Centre for Infection Research (HZI), Braunschweig, Germany
-
-For questions about the pipeline please open a GitHub Issue.
-
----
-
-## Licence
-
-MIT Licence — see [LICENSE](LICENSE) for details.
