@@ -4,8 +4,6 @@
 
 ECLIPSE maps target-pathogen proteomes onto the global sequence similarity network of the [Protein Universe Atlas](https://uniprot3d.org/) (AFDB90v4, UniRef v.2022_03), identifies protein families that are completely dark at the connected component level, characterises their taxonomic diversity across ESKAPE pathogens, and ranks them using the Dark Proteome Prioritisation Score (DPPS).
 
-> **Associated publication:**
-> Lata S. & Heinz D.W. (2025). *ECLIPSE: Exploring the dark proteome of ESKAPE pathogens through the sequence similarity network of the Protein Universe Atlas.* Bioinformatics, Oxford University Press. [DOI to be added upon acceptance]
 
 ---
 
@@ -27,7 +25,7 @@ ECLIPSE maps target-pathogen proteomes onto the global sequence similarity netwo
 ECLIPSE runs as three sequential Jupyter notebooks. Each notebook must be completed before starting the next.
 
 ```
-Your pathogen FASTA files
+Your pathogen FASTA files 
         |
         v  MMseqs2 easy-search (run before Part I)
         |
@@ -125,7 +123,7 @@ The following large files from the Protein Universe Atlas must be downloaded sep
 
 Download from Zenodo: https://doi.org/10.5281/zenodo.19119408
 
-These files are produced by Durairaj et al. (2023) — see the original paper: https://www.nature.com/articles/s41586-023-06622-3
+Note: These files are produced by Durairaj et al. (2023) — see the original paper: https://www.nature.com/articles/s41586-023-06622-3
 
 ---
 
