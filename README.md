@@ -35,7 +35,7 @@ It does this in three sequential stages:
 
 | Stage | Notebook | Purpose |
 |-------|----------|---------|
-| **I** | `ECLIPSE_PartI.ipynb` | Map proteome to ESM Atlas → compute community/component darkness & taxonomic diversity |
+| **I** | `ECLIPSE_PartI.ipynb` | Map proteome to Uniprot 3d Atlas → compute community/component darkness & taxonomic diversity |
 | **II** | `ECLIPSE_PartII.ipynb` | Extract pathogen-specific and ESKAPE-enriched dark components |
 | **III** | `ECLIPSE_DPPS_score.ipynb` | Cluster proteins → score components with DPPS → rank & visualize candidates |
 
