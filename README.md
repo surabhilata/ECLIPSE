@@ -468,7 +468,7 @@ mmseqs easy-search <organism>_faa.tar.gz AFDBv4_90.fasta <organism>.m8 tmp --max
 
 ## Key Concepts
 
-**Functional brightness / darkness:** A metric from the ESM Metagenomic Atlas quantifying the fraction of proteins in a community that have functional annotations. A brightness of 0% means no protein in the community has a known function — a "dark" community. Components with median brightness ≤ 5% are considered dark in this pipeline.
+**Functional brightness / darkness:** A metric from the Protein Universe Atlas quantifying the fraction of proteins in a community that have functional annotations. A brightness of 0% means no protein in the community has a known function — a "dark" community. Components with median brightness ≤ 5% are considered dark in this pipeline.
 
 **Community vs. component:** In the Atlas, proteins are grouped into *communities* based on structural similarity. Communities that are connected in the global similarity network form larger *components* (subgraphs). Darkness is assessed at both levels.
 
@@ -517,13 +517,16 @@ Lower your `MMSEQS_MIN_SEQ_ID` to include more diverse sequences, or adjust `TIE
 
 ## Citation
 
-If you use ECLIPSE in your research, please cite:
+If you use ECLIPSE in your research, please cite: this github 
 
-> [Your citation here]
+Also if you are using ECLIPSE please cite these two papers a well:
+1. Durairaj,J. et al. (2023) Uncovering new families and folds in the natural protein universe. Nature, 622, 646–653.
+2. Steinegger,M. and Söding,J. (2017) MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat. Biotechnol., 35, 1026–1028.
+ 
 
 ---
 
 ## License
 
-[Your license here]
+[MIT-licence]
 
