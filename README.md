@@ -44,7 +44,7 @@ It does this in three sequential stages:
 ## Pipeline Architecture
 
 ```
-Your proteome FASTA files (one or many strains)
+Your proteome FASTA files (diverse strains)
             │
             ▼
    MMseqs2 easy-search
@@ -66,7 +66,7 @@ Your proteome FASTA files (one or many strains)
             ▼
     ECLIPSE_PartII.ipynb
     ┌─────────────────────────────────────────────┐
-    │ • Filter dark components (brightness ≤ 5%)  │
+    │ • Filter dark components                    │
     │ • Track A: pathogen-genus-specific comps    │
     │ • Track B: ESKAPE-enriched components       │
     │ • Add species-level proportions             │
