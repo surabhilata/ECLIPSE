@@ -519,7 +519,7 @@ Lower your `MMSEQS_MIN_SEQ_ID` to include more diverse sequences, or adjust `TIE
 
 If you use ECLIPSE in your research, please cite: this github 
 
-Also if you are using ECLIPSE please cite these two papers a well:
+Also if you are using ECLIPSE please cite these two papers as well:
 1. Durairaj,J. et al. (2023) Uncovering new families and folds in the natural protein universe. Nature, 622, 646–653.
 2. Steinegger,M. and Söding,J. (2017) MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat. Biotechnol., 35, 1026–1028.
  
