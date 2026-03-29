@@ -129,14 +129,15 @@ mmseqs --version
 
 ## Required Input Files
 
-You need to download the **ESM Metagenomic Atlas** files. These are large; download them once and reuse across analyses.
+You need to download the following files. These are large; download them once and reuse across analyses. you can download it via https://doi.org/10.5281/zenodo.19119408
+Note: These files were produced in Uniprot 3d Atlas (Durairaj et al, 2023)
 
 | File | Description | Where to Get |
 |------|-------------|--------------|
-| `AFDBv4_90.fasta` | Atlas UniRef50 representative sequences | [ESM Atlas](https://esmatlas.com/resources) |
-| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (connected components) | [ESM Atlas](https://esmatlas.com/resources) |
-| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (DUST regions) | [ESM Atlas](https://esmatlas.com/resources) |
-| `AFDB90v4_subgraphs_summary.csv` | Component-level summary statistics | [ESM Atlas](https://esmatlas.com/resources) |
+| `AFDBv4_90.fasta` | Atlas UniRef50 representative sequences | 
+| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (connected components) |
+| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (DUST regions) |
+| `AFDB90v4_subgraphs_summary.csv` | Component-level summary statistics | 
 
 Your own input files:
 
