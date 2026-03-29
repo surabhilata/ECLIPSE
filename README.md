@@ -153,7 +153,7 @@ Your own input files:
 
 ### Part I — Atlas Mapping & Diversity Analysis (`ECLIPSE_PartI.ipynb`)
 
-**What it does:** Maps every protein in your dataset to a community and component in the ESM Atlas, then computes darkness and taxonomic diversity metrics.
+**What it does:** Maps every protein in your dataset to a community and component in the Atlas, then computes darkness and taxonomic diversity metrics.
 
 #### Step 0 — Run MMseqs2 (outside the notebook, in terminal)
 
@@ -284,7 +284,7 @@ mapped_dataset_eskape_enriched = mapped_dataset.loc[
 
 ### Part III — Clustering & DPPS Prioritization (`ECLIPSE_DPPS_score.ipynb`)
 
-**What it does:** Clusters redundant sequences, builds component-level scoring tables, computes the DPPS composite score, performs Monte Carlo weight sensitivity analysis, and produces ranked output tables and publication-ready figures.
+**What it does:** Clusters redundant sequences, builds component-level scoring tables, computes the DPPS composite score, performs Monte Carlo weight sensitivity analysis, and produces ranked output tables.
 
 #### Step 1 — Configure input files and parameters (Cell 3)
 
