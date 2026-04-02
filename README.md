@@ -629,7 +629,7 @@ This occurs when a `targetID` from your search results is not present in the Atl
 
 ## Citation
 
-If you use ECLIPSE in your research, please cite this repository.
+If you use ECLIPSE in your research, please cite this preprint (https://www.biorxiv.org/cgi/content/short/2026.03.30.715302v1).
 
 Please also cite:
 
