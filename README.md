@@ -372,7 +372,7 @@ Every code cell contains an in-line comment describing what it does. Users who w
 
 ### Key concepts referenced in the notebook
 
-**Functional brightness / darkness:** Fraction of proteins in an Atlas community that have functional annotations. Brightness of 0% means no protein in the community has a known function. Components with median brightness ≤ 5% are considered dark.
+**Functional brightness / darkness:** Fraction of proteins in an Atlas community that have functional annotations. Brightness of 0% means no protein in the community has a known function. Components with median brightness 0% are considered dark.
 
 **Community vs. component:** In the Atlas, proteins are grouped into communities based on structural similarity. Communities that are connected in the global similarity network form larger components (subgraphs). Darkness is assessed at both levels.
 
