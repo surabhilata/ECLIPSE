@@ -111,7 +111,7 @@ mmseqs easy-search test_data/faa/PAO1.faa AFDBv4_90.fasta test_data/PAO1.m8 tmp 
 ### 4. Open and run the notebook
 
 ```bash
-open jupyter notebook "ECLIPSE_test_data.ipynb" present in test_data directory
+## open jupyter notebook "ECLIPSE_test_data.ipynb" present in test_data directory
 ```
 
 In the **Configuration cell** (Section 1 of the notebook), the default values are already set for the test data:
