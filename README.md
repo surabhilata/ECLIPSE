@@ -70,7 +70,7 @@ A small test dataset is provided to verify your installation and demonstrate the
 
 ### 1. Unpack the test data
 
-The test data is bundled as `test_data.tar.xz` in this repository. Unzip it in the repository root:
+The test data is bundled as `test_data.zip` in this repository. Unzip it in the repository root:
 
 ```bash
 unzip test_data.zip
