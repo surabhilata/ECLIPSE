@@ -83,7 +83,7 @@ This creates a `test_data/` folder containing:
 | `test_data/faa/PAO1.faa`         | Single *P. aeruginosa* PAO1 proteome (5,079 proteins)                              |
 | `test_data/PAO1.m8`              | Pre-computed MMseqs2 search result, so the test does not require `AFDBv4_90.fasta` |
 | `test_data/expected_summary.txt` | Expected output values for verifying your run                                      |
-| `test_data/expected_outputs/`    | Reference Tier I CSVs for direct comparison                                        |
+| `test_data/output/`    | Reference Tier I CSVs for direct comparison                                        |
 
 ### 2. Download the Atlas reference data
 
