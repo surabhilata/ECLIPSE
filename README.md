@@ -137,7 +137,7 @@ A successful run on this single-strain test produces:
 - **Part III** — **24 Tier I** *Pseudomonas*-specific components (mean DPPS 0.888) and **9 Tier I** ESKAPE-enriched components (mean DPPS 0.800), after the ≥ 300 aa median-length filter and MMseqs2 redundancy removal
 - Full list of CSV and figure outputs in the working directory
 
-A reference summary is provided in `test_data/expected_summary.txt`, and reference Tier I CSVs for direct comparison are in `test_data/expected_outputs/`. Small numerical variation (± 1 component) is possible due to library versions and Monte Carlo sampling.
+A reference summary is provided in `test_data/expected_summary.txt`, and reference Tier I CSVs for direct comparison are in `test_data/output/`. Small numerical variation (± 1 component) is possible due to library versions and Monte Carlo sampling.
 
 > **Note on the single-strain test:** Because the test uses only PAO1, the S4 strain-coverage sub-score saturates at 1.0 for every component by construction. Multi-strain behaviour of S4 is demonstrated in the manuscript on the full *P. aeruginosa* panproteome and is not exercised by this minimal test set.
 
