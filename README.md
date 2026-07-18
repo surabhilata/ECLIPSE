@@ -89,7 +89,7 @@ This creates a `test_data/` folder containing:
 
 The Atlas reference files are required for any ECLIPSE run (test or your own data). They are too large to host in the repository and are available from Zenodo: <https://doi.org/10.5281/zenodo.19119408>.
 
-Download these files and place them in the repository root:
+Download these files and place them in the unzipped downloaded test_data directory:
 
 | File                                                                  | Purpose                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------ |
