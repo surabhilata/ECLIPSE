@@ -113,7 +113,7 @@ mmseqs easy-search test_data/faa/PAO1.faa AFDBv4_90.fasta test_data/PAO1.m8 tmp 
 ### 4. Open and run the notebook
 
 ```bash
-## open jupyter notebook "ECLIPSE_test_data.ipynb" present in test_data directory
+## open jupyter notebook after activating the eclipse environment as stated above and then launch jupyter notebook from terminal. Go to folder test_data ( cd test_data).  Use the "ECLIPSE_test_data.ipynb" present in test_data folder. User can also launch this notebook through virtual studio code. 
 ```
 
 In the **Configuration cell** (Section 1 of the notebook), the default values are already set for the test data:
@@ -123,8 +123,8 @@ GENUS        = "Pseudomonas"
 SPECIES      = "Pseudomonas aeruginosa"
 SPECIES_COL  = "p_aeruginosa_proportion"
 SPECIES_ABBR = "PA"
-FAA_DIR      = "./test_data/faa"
-M8_FILE      = "./test_data/PAO1.m8"
+FAA_DIR      = "./faa"
+M8_FILE      = "./PAO1.m8"
 MIN_SEQ_LEN  = 300
 ```
 
@@ -143,8 +143,7 @@ A reference summary is provided in `test_data/expected_summary.txt`, and referen
 
 > **Note on the single-strain test:** Because the test uses only PAO1, the S4 strain-coverage sub-score saturates at 1.0 for every component by construction. Multi-strain behaviour of S4 is demonstrated in the manuscript on the full *P. aeruginosa* panproteome and is not exercised by this minimal test set.
 
-Approximate runtime: 3–5 minutes on a laptop (4 CPU cores, 8 GB RAM), excluding the initial Atlas CSV download.
-
+Approximate runtime: on a laptop of CPU Apple M3 of clock frequency 2.40 GHz with 8 physical cores on Darwin 23.3.0 (x86_64) operating system. The test data runtime is 5.6 mins with peak memory of 6 gb
 ---
 
 ## Running ECLIPSE on your own data
