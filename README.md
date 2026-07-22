@@ -84,8 +84,8 @@ This creates a `test_data/` folder containing:
 | `test_data/PAO1.m8`              | Pre-computed MMseqs2 search result, so the test does not require `AFDBv4_90.fasta` |
 | `test_data/expected_summary.txt` | Expected output values for verifying your run                                      |
 | `test_data/output/`    | Reference Tier I CSVs for direct comparison                                                  |
-| `ECLIPSE_test_data.ipynb/`   | Notebook to run                                                                          
-| `eclipse_serach_results_component_dark.csv`  | Part 1 outputs file eclipse_seq.csv from which we select only component with brightness 0 and name it as eclipse_serach_results_component_dark.csv |
+| `test_data/ECLIPSE_test_data.ipynb/`   | Notebook to run                                                                          
+| `test_data/eclipse_serach_results_component_dark.csv`  | Part 1 outputs a file "eclipse_seq.csv " from which we select only component with brightness 0 and name it as "eclipse_serach_results_component_dark.csv" for part II |
 
 ### 2. Download the Atlas reference data
 
