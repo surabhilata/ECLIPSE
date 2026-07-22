@@ -52,7 +52,7 @@ pip install jupyter pandas numpy matplotlib seaborn biopython tqdm pyyaml
 Verify MMseqs2 is accessible:
 
 ```bash
-mmseqs --version
+mmseqs version
 ```
 
 ### 3. Clone this repository
