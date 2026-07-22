@@ -66,7 +66,7 @@ cd ECLIPSE
 
 ## Quick start — run ECLIPSE on test data
 
-A small test dataset is provided to verify your installation and demonstrate the expected output. The dataset is a single *P. aeruginosa* PAO1 proteome, so the full pipeline runs in a few minutes on a standard laptop.
+A small test dataset is provided to verify your installation and demonstrate the expected output. The dataset is a single *P. aeruginosa* PAO1 proteome, so the full pipeline was tested on CPU Apple M3 of clock frequency 2.40 GHz with 8 physical cores on Darwin 23.3.0 (x86_64) operating system. The test data runtime is 5.6 mins with peak memory of 6 gb. One can also launch the notebook through Virtual Studio Code. 
 
 ### 1. Unpack the test data
 
@@ -83,7 +83,9 @@ This creates a `test_data/` folder containing:
 | `test_data/faa/PAO1.faa`         | Single *P. aeruginosa* PAO1 proteome (5,079 proteins)                              |
 | `test_data/PAO1.m8`              | Pre-computed MMseqs2 search result, so the test does not require `AFDBv4_90.fasta` |
 | `test_data/expected_summary.txt` | Expected output values for verifying your run                                      |
-| `test_data/output/`    | Reference Tier I CSVs for direct comparison                                        |
+| `test_data/output/`    | Reference Tier I CSVs for direct comparison                                                  |
+| 'ECLIPSE_test_data.ipynb/' | Notebook to run                                                                          
+| eclipse_serach_results_component_dark.csv | Part 11 outputs file eclipse_seq.csv ffrom which we select only component with brightness 0 and name it as eclipse_serach_results_component_dark.csv |
 
 ### 2. Download the Atlas reference data
 
