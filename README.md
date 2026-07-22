@@ -116,7 +116,7 @@ mmseqs easy-search test_data/faa/PAO1.faa AFDBv4_90.fasta test_data/PAO1.m8 tmp 
 ## open jupyter notebook after activating the eclipse environment as stated above and then launch jupyter notebook from terminal. Go to folder test_data ( cd test_data).  Use the "ECLIPSE_test_data.ipynb" present in test_data folder. User can also launch this notebook through virtual studio code. 
 ```
 
-In the **Configuration cell** (Section 1 of the notebook), the default values are already set for the test data:
+In the **Configuration cell** (Section 2 of the notebook), the default values are already set for the test data:
 
 ```python
 GENUS        = "Pseudomonas"
