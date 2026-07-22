@@ -95,10 +95,10 @@ Download these files and place them in the unzipped downloaded test_data directo
 
 | File                                                                  | Purpose                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------ |
-| `AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (connected components)      |
-| `AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv`    | Community-level Atlas data (DUST regions)              |
-| `AFDB90v4_subgraphs_summary.csv`                                      | Component-level summary statistics                     |
-| `AFDBv4_90.fasta` (optional)                                          | Only needed if you want to re-run MMseqs2 from scratch |
+| `test_data/AFDB90v4_cc_data_uniprot_community_taxonomy_map_with_brightness.csv` | Community-level Atlas data (connected components)      |
+| `test_data/AFDB90v4_dust_uniprot_community_taxonomy_map_with_brightness.csv`    | Community-level Atlas data (DUST regions)              |
+| `test_data/AFDB90v4_subgraphs_summary.csv`                                      | Component-level summary statistics                     |
+| `test_data/AFDBv4_90.fasta` (optional)                                          | Only needed if you want to re-run MMseqs2 from scratch |
 
 > The Atlas CSVs only need to be downloaded once and are reused across all ECLIPSE runs.
 
