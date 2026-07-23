@@ -129,6 +129,7 @@ MIN_SEQ_LEN  = 300
 ```
 
 Run all cells (`Cell → Run All`). The full pipeline (Part I → Part II → Part III) executes end-to-end in one notebook.
+For any failed run restart and reconnect the kernel again. And then run all cells.
 
 ### 5. Expected output
 
