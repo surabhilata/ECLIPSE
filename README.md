@@ -175,7 +175,7 @@ mmseqs easy-search all_proteins.faa AFDBv4_90.fasta YOUR_PATHOGEN.m8 tmp --max-s
 
 ### 3. Edit the configuration cell
 
-Open `ECLIPSE_complete.ipynb` and edit the Configuration cell (Section 1). Example values for common ESKAPE pathogens:
+Open `ECLIPSE_complete.ipynb` and edit the Configuration cell. Example values for common ESKAPE pathogens:
 
 | Pathogen        | `GENUS`            | `SPECIES`                   | `SPECIES_COL`               | `SPECIES_ABBR` |
 | --------------- | ------------------ | --------------------------- | --------------------------- | -------------- |
