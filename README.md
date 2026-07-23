@@ -66,7 +66,7 @@ cd ECLIPSE
 
 ## Quick start — run ECLIPSE on test data
 
-A small test dataset is provided in directory "test_data.zip" to verify your installation and demonstrate the expected output. The dataset is a single *P. aeruginosa* PAO1 proteome,  the full pipeline was tested on CPU Apple M3 of clock frequency 2.40 GHz with 8 physical cores on Darwin 23.3.0 (x86_64) operating system. The test data runtime is 5.6 mins with peak memory of 6 gb. One can also launch the notebook through Virtual Studio Code. 
+A small test dataset is provided in directory "test_data.zip" to verify your installation and demonstrate the expected output. The dataset is a single *P. aeruginosa* PAO1 proteome,  the full pipeline was tested on CPU Apple M3 of clock frequency 2.40 GHz with 8 physical cores on Darwin 23.3.0 (x86_64) operating system. The test data runtime is 5.6 mins with peak memory of 6 gb. One can also launch the notebook through Visual Studio Code. 
 
 ### 1. Unpack the test data
 
@@ -113,7 +113,7 @@ mmseqs easy-search test_data/faa/PAO1.faa AFDBv4_90.fasta test_data/PAO1.m8 tmp 
 ### 4. Open and run the notebook
 
 ```bash
-## open jupyter notebook after activating the eclipse environment as stated above and then launch jupyter notebook from terminal. Go to folder test_data ( cd test_data).  Use the "ECLIPSE_test_data.ipynb" present in test_data folder. User can also launch this notebook through virtual studio code. 
+## open jupyter notebook after activating the eclipse environment as stated above and then launch jupyter notebook from terminal. Go to folder test_data ( cd test_data).  Use the "ECLIPSE_test_data.ipynb" present in test_data folder. User can also launch this notebook through visual studio code. 
 ```
 
 In the **Configuration cell** (Section 2 of the notebook), the default values are already set for the test data:
