@@ -248,7 +248,7 @@ The notebook writes the following files to the working directory:
 
 ## Pipeline architecture and methods
 
-ECLIPSE runs in three sequential stages, all contained in `ECLIPSE_complete.ipynb`:
+ECLIPSE runs in three sequential stages, all contained in `ECLIPSE_complete.ipynb` for whole PA dataset used in study and for test data it is inside folder test_data.zip with name "ECLIPSE_test_data.ipynb":
 
 ```
 Your proteome FASTA files (.faa, one file per strain)
